@@ -76,7 +76,7 @@ public class RowSwap extends Thread{
 				// preparazione della linea e invio della risposta
 				try {
 					esito = LineSwap.swapLine(fileName, line1, line2);
-					//stampo esito
+					//stampo messaggio dell'operazione in base all'esito di LineSwap
 					if(esito==-1) System.out.println("Errore operazione, righe inserite non valide");
 					if(esito==-2) System.out.println("Errore operazione, errore nell' IO da file");
 					else if(esito>0) System.out.println("Operazione eseguita con successo");
