@@ -15,6 +15,8 @@ import java.util.StringTokenizer;
 public class Client {
 	public static void main(String[] args) {
 //ciao raga sono su eclipse
+		
+		//seconda prova
 		//Usage: IPDS portDS fileName
 		InetAddress ipDS=null;
 		int portDS = -1;
