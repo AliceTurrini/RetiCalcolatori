@@ -14,23 +14,20 @@ import java.util.StringTokenizer;
 
 public class Client {
 	public static void main(String[] args) {
-//ciao raga sono su eclipse
 		
-		//seconda prova
 		//Usage: IPDS portDS fileName
 		InetAddress ipDS=null;
 		int portDS = -1;
 		String filename=null;
 
 		/*CONTROLLO ARGOMENTI*/
-		//ciao prova github
 		try {
 			if (args.length == 3) {
 				ipDS = InetAddress.getByName(args[0]);//lancia exception
 				portDS = Integer.parseInt(args[1]);
 				filename=new String(args[2]);
 			} else {
-				System.out.println("Usage: java Client IPDS portDS fileName");
+				System.out.println("Errore argomenti, deve essere: java Client IPDS portDS fileName");
 				System.exit(1);
 			}
 		} catch (UnknownHostException e) {
