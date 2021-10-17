@@ -8,7 +8,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 
 public class DiscoveryServer {
@@ -73,12 +72,10 @@ public class DiscoveryServer {
 		}
 
 
-		int flg_dup=0; //0=ok (ne porte ne file duplicati)	1=file duplicati	2=porte duplicate
-
 		//se ho più di 3 argomenti devo controllare di non avere duplicati (meno di 3 non posso neanche avere duplicati):
 		if (args.length > 3) { 		  
 			for (i=0; i<num_coppie; i++) { //scorro tutti i file dell array dei nome file			  
-				for (j=1; j<num_coppie && flg_dup==0; j++) { //scorro rimanenze del array del file
+				for (j=i+1; j<num_coppie; j++) { //scorro rimanenze del array del file
 					if (nomi_file[i].equals(nomi_file[j]) ) {
 						//se trovo due file uguali
 						System.out.println("Devo avere nomi di file non duplicati!");
@@ -97,19 +94,18 @@ public class DiscoveryServer {
 		//sicuramente avrò bisogno di una socket e di un packet:
 		DatagramSocket socket=null; //comunicazione con cliente
 		DatagramPacket packet=null;
-		byte[] buf = new byte[256];;
+		byte[] buf = new byte[256];
 
 		for (i=0; i<num_coppie; i++) {
 			//creo tutti i "figli" e li faccio partire
 			RowSwap rss = new RowSwap(num_porte[i], nomi_file[i]);
-			rss.start();; 		//CONTROLLARE!
+			rss.start();
 		}
 
 		try {
 			socket = new DatagramSocket( Integer.parseInt(args[0])); 
 			packet = new DatagramPacket(buf, buf.length);
 			System.out.println("Creata la socket: " + socket);
-			System.out.println("Nella socket io ho ip "+socket.getInetAddress()+" e port "+socket.getPort());
 
 		}catch (SocketException | NumberFormatException  e) {
 			System.out.println("Problemi nella creazione della socket: ");
@@ -119,9 +115,6 @@ public class DiscoveryServer {
 
 		try {
 			int portaRS; //risultato da comunicare al cliente
-			int porta_cliente=-1;
-
-			InetAddress ip_cliente=null;
 			String richiesta = null;
 
 			ByteArrayInputStream biStream = null;
@@ -135,6 +128,7 @@ public class DiscoveryServer {
 				System.out.println("\nIn attesa di richieste...");
 
 				try {
+					buf = new byte[256];
 					packet.setData(buf);
 					socket.receive(packet);
 				}
@@ -147,24 +141,14 @@ public class DiscoveryServer {
 
 				try {
 					//apro il pacchetto e mi salvo il nome del file dentro "richiesta"
-					biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());
-					/*.buf the input buffer
-					 *.offset the offset in the buffer of the first byte to read
-					 *.length the maximum number of bytes to read from the buffer.*/
 
+					biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());
 					diStream = new DataInputStream(biStream); //converto i bytes in stringa (ne ho una sola che è il nome del file ???)
 					richiesta = diStream.readUTF();
 					System.out.println("Richiesto file: " + richiesta);
 				}
-				catch (EOFException eof ) {
+				catch (EOFException eof ) {//CLIENT è MORTO
 					System.err.println("Utente ha terminato l'operazione con il file: "+ richiesta);
-					/*
-				packet.setPort(porta_cliente);
-	        	packet.setAddress(ip_cliente);
-	        	String message= new String("Errore nella lettura, ");
-				packet.setData(message.getBytes(), 0, message.length());
-				socket.send(packet);
-					 */
 					eof.printStackTrace();
 
 					continue; // il server continua a fornire il servizio ricominciando dall'inizio del ciclo
@@ -189,8 +173,9 @@ public class DiscoveryServer {
 
 				//ora devo preparare a risposta in cui inserire la porta_row_swap necessaria al cliente:
 				//a chi la mando??
-				porta_cliente = packet.getPort();
-				ip_cliente = packet.getAddress();
+				//I DRIVER FANNO DA SOLI GLI SCAMBI
+				//				porta_cliente = packet.getPort();
+				//				ip_cliente = packet.getAddress();
 
 				try {
 					boStream = new ByteArrayOutputStream();
@@ -198,8 +183,8 @@ public class DiscoveryServer {
 					doStream.writeInt(portaRS); 
 					buf = boStream.toByteArray(); //array di byte con dentro la info della portaRS!!
 
-					packet.setPort(porta_cliente);
-					packet.setAddress(ip_cliente);
+					//					packet.setPort(porta_cliente);
+					//					packet.setAddress(ip_cliente);
 
 					packet.setData(buf, 0, buf.length);
 					socket.send(packet);
