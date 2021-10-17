@@ -1,36 +1,36 @@
-package es1;
+package proposta1;
 
 import java.io.*;
 import java.net.*;
-//import java.util.*;
 
 public class RowSwap extends Thread{
 	private final String fileName;
 	private final int port;
+	private final static InetAddress IP=InetAddress.getLoopbackAddress();
 	//una volta inizializzata un'istanza di RawSwap, il nome del file e la porta non cambiano
-	
+
 	public RowSwap(int port, String fileName) {
 		this.fileName = fileName;
 		this.port=port;
 	}
-	
+
 	public void run() {
 		DatagramSocket socket = null;
 		DatagramPacket packet = null;
 		byte[] buf_ricezione = new byte[256];
-		
+
 		//preparo socket per la ricezione
 		try {
-			socket = new DatagramSocket(port);
+			socket = new DatagramSocket(port,IP);
 			packet = new DatagramPacket(buf_ricezione, buf_ricezione.length);
-			System.out.println("Creata la socket: " + socket);
+			System.out.println("RowSwap: Creata la socket: " + socket+ "con ip "+socket.getInetAddress()+" e con porta "+socket.getPort());
 		}
 		catch (SocketException e) {
 			System.out.println("Problemi nella creazione della socket: ");
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
+
 		try {
 			int line1, line2, esito;
 			ByteArrayInputStream biStream = null;
@@ -41,27 +41,34 @@ public class RowSwap extends Thread{
 
 			//DEMONE
 			while (true) {
-				line1=-1; line2=-1; esito=-1;
+				line1=-1; line2=-1; esito=-3;
 				//resetto valori
-				System.out.println("\nIn attesa di richieste...");
-				
+
+
 				// ricezione del datagramma
 				try {
 					packet.setData(buf_ricezione);
 					socket.receive(packet);
+					System.out.println("\nRowSwap: sono in ascolto sulla porta: "+socket.getPort());
+					System.out.println("\nRowSwap: in attesa di richieste...");
 					//sospensiva, mi metto in attesa di richieste...
 				}
 				catch (IOException e) {
 					System.err.println("Problemi nella ricezione del datagramma");
 					e.printStackTrace();
-					continue;
+					esito=-2;
 				}
-				
+
 
 				try {
 					biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());
 					diStream = new DataInputStream(biStream);
-					//lettura tipizzata come int
+					//lettura tipizzata come int ////IMPORTANTE
+					/*String richiesta=new String("");
+					richiesta=diStream.readUTF();
+					StringTokenizer st = new StringTokenizer(richiesta);
+					line1 = Integer.parseInt(st.nextToken());
+					line2 = Integer.parseInt(st.nextToken());*/
 					line1 = diStream.readInt();
 					line2 = diStream.readInt();
 					//redInt return the next four bytes of this input stream, interpreted as an int
@@ -70,17 +77,18 @@ public class RowSwap extends Thread{
 				catch (Exception e) {
 					System.err.println("Problemi nella lettura della richiesta");
 					e.printStackTrace();
-					continue;
+					esito=-1;
 				}
 
 				// preparazione della linea e invio della risposta
 				try {
-					esito = LineSwap.swapLine(fileName, line1, line2);
+					if(esito!=-1 && esito!=-2)
+						esito = LineSwap.swapLine(fileName, line1, line2);
 					//stampo messaggio dell'operazione in base all'esito di LineSwap
 					if(esito==-1) System.out.println("Errore operazione, righe inserite non valide");
 					if(esito==-2) System.out.println("Errore operazione, errore nell' IO da file");
 					else if(esito>0) System.out.println("Operazione eseguita con successo");
-					
+
 					boStream = new ByteArrayOutputStream();
 					doStream = new DataOutputStream(boStream);
 					doStream.writeInt(esito);
@@ -106,8 +114,8 @@ public class RowSwap extends Thread{
 		socket.close();
 
 	}
-	
-	
+
+
 
 
 }
