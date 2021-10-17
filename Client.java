@@ -1,3 +1,5 @@
+package proposta1;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,11 +12,17 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 public class Client {
+	// porta nel range consentito 1024-65535!
+	// dichiarata come statica perchè caratterizza il server
+	private static final int PORT = 4445;
+
 	public static void main(String[] args) {
-		
+
+
 		//Usage: IPDS portDS fileName
 		InetAddress ipDS=null;
 		int portDS = -1;
@@ -27,7 +35,7 @@ public class Client {
 				portDS = Integer.parseInt(args[1]);
 				filename=new String(args[2]);
 			} else {
-				System.out.println("Errore argomenti, deve essere: java Client IPDS portDS fileName");
+				System.out.println("Usage: java Client IPDS portDS fileName");
 				System.exit(1);
 			}
 		} catch (UnknownHostException e) {
@@ -40,14 +48,15 @@ public class Client {
 
 		DatagramSocket socket = null;	
 		DatagramPacket packet = null;
+
 		byte[] buf = new byte[256];	
-		
+
 		/*INTERAZIONE CLIENTE DS*/
 		// creazione della socket datagram e creazione datagram packet
 		try {
-			socket = new DatagramSocket(portDS,ipDS);
-			//socket.setSoTimeout(30000);
-			packet = new DatagramPacket(buf, buf.length);
+			socket = new DatagramSocket(PORT);//!NELLA SOCKET SI DEFINISCONO I PROPRI IP E PORT
+			//			socket.setSoTimeout(30000);
+			packet = new DatagramPacket(buf, buf.length, ipDS, portDS);//NEL PACKET DEFINISCO IP E PORT DEL DESTINATARIO
 			System.out.println("\nLineClient: avviato");
 			System.out.println("Creata la socket: " + socket);
 		} catch (SocketException e) {
@@ -73,10 +82,11 @@ public class Client {
 			data = boStream.toByteArray();//trasformo il data output in byte
 			packet.setData(data);//creo il pacchetto richiesta fatto di byte
 			socket.send(packet);
-			System.out.println("Richiesta inviata a " + ipDS + ", " + portDS);
+			System.out.println("Richiesta inviata a " + packet.getAddress() + " , " + packet.getPort());
 		} catch (IOException e) {
 			System.out.println("Problemi nell'invio della richiesta al DS: ");
 			e.printStackTrace();
+			System.exit(-1);
 		}
 		//metto il cliente in ascolto per ricevere messaggio da ds
 		try {
@@ -87,50 +97,70 @@ public class Client {
 		} catch (IOException e) {
 			System.out.println("Problemi nella ricezione del datagramma: ");
 			e.printStackTrace();
+			System.exit(-1);
 		}	
 		//sotto codice dopo che il client ha ricevuto dal DS il numero di porta del RowSwap
 		//salvataggio numero di porta del row swap ricevuto dal ds
 		try {
 			biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());//creo dato in byte per la ricezione di byte
 			diStream = new DataInputStream(biStream);//incapsulo i byte ricevuti in un oggetto data stream
-			portaRS = Integer.parseInt(diStream.readUTF());
+			portaRS = diStream.readInt();
 			System.out.println("Risposta: numero porta row swap " + portaRS);
+			if(portaRS<0) {
+				System.out.println("Il DS non supporta il file "+filename);
+				System.out.println("LineClient: termino...");
+				System.exit(-2);
+			}
 		} catch (IOException e) {
 			System.out.println("Problemi nella lettura della risposta: ");
 			e.printStackTrace();
+			System.exit(-1);
 		}
-		
-/*INTERAZIONE CLIENTE UTENTE*/		
+
+		/*INTERAZIONE CLIENTE UTENTE*/		
 		//ri-creo la socket tra cliente e rs
-//		socket = new DatagramSocket(portaRS,ipDS);//NB i rowswap e il ds sono nella stessa rete locale quindi uso lo stesso ip
+		//		socket = new DatagramSocket(portaRS,ipDS);//NB i rowswap e il ds sono nella stessa rete locale quindi uso lo stesso ip
 
 		int righe[]=new int[2];
 		String line=null;
-		StringTokenizer st = new StringTokenizer(line);
+		StringTokenizer st;
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 		System.out
 		.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci le righe da scambiare: ");
 
 		try {
 			while ((line = stdIn.readLine()) != null) {
+				st = new StringTokenizer(line);
 				//non uso for perchè troppo costoso
-				righe[0] = Integer.parseInt(st.nextToken(line));
-				righe[1] = Integer.parseInt(st.nextToken(line));
+				try {
+					righe[0] = Integer.parseInt(st.nextToken());
+					righe[1] = Integer.parseInt(st.nextToken());
+				} catch (NumberFormatException  | NoSuchElementException e) {
+					System.out.println("Comando o interi non riconosciuti");
+					e.printStackTrace();
+					System.out
+					.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci le righe da scambiare: ");
+					continue;
+				}
+
 				/*INTERAZIONE CLIENTE ROW SWAP*/
 				// riempimento e invio del pacchetto di richiesta dal cliente al RowSwap
 				try {
 					//siccome l'utente non deve più interagire con il DS allora utilizzo gli stessi stream e variabili
-
+					boStream.reset();//SCARICO LO STREAM OUT
 					doStream.writeInt(righe[0]);//scrivo il primo intero
-					doStream.writeInt(righe[0]);//scrivo il secondo intero
+					doStream.writeInt(righe[1]);//scrivo il secondo intero
 					data = boStream.toByteArray();//trasformo il data output in byte
 					packet.setPort(portaRS);
 					packet.setData(data);//creo il pacchetto richiesta fatto di byte
 					socket.send(packet);
-					System.out.println("Richiesta inviata a " + ipDS + ", " + portaRS);
+					System.out.println("Richiesta inviata a " + packet.getAddress() + ", " + packet.getPort());
 				} catch (IOException e) {
 					System.out.println("Problemi nell'invio della richiesta: ");
 					e.printStackTrace();
+					System.out
+					.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci le righe da scambiare: ");
+					continue;
 				}
 
 				int esito=0;
@@ -144,6 +174,9 @@ public class Client {
 				} catch (IOException e) {
 					System.out.println("Problemi nella ricezione del datagramma: ");
 					e.printStackTrace();
+					System.out
+					.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci le righe da scambiare: ");
+					continue;
 				}
 				try {
 					biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());//creo dato in byte per la ricezione di byte
@@ -153,20 +186,32 @@ public class Client {
 				} catch (IOException e) {
 					System.out.println("Problemi nella lettura della risposta: ");
 					e.printStackTrace();
+					System.out
+					.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci le righe da scambiare: ");
+					continue;
 				}
 				//analizzo esito
 				if(esito==-1) {
 					System.out.println("L'esito è negativo: Row Swap con porta "+portaRS+"non è riuscito a scambiare le righe "+righe[0]+" "+righe[1]);
 					System.out.println("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci altre righe da scambiare: ");
+
 				}
-				else// tutto ok, pronto per nuova richiesta
-					System.out
-					.print("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci altre righe da scambiare: ");
+				if(esito==-2) {
+					System.out.println("L'esito è negativo: Row Swap con porta "+portaRS+"ha riscontrato degli errori di I/O nel file "+filename);
+					System.exit(-2);//per specifiche del programma
+				}
+				else {
+					System.out.println("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci altre righe da scambiare: ");
+					continue;
+				}
+				// tutto ok, pronto per nuova richiesta
+				System.out.println("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci altre righe da scambiare: ");
+
 			}
 		}
 		// qui catturo le eccezioni non catturate all'interno del while (tipo la ParseException)
 		// in seguito alle quali il client termina l'esecuzione
-		catch (Exception e) {
+		catch ( Exception  e) {
 			e.printStackTrace();
 		}
 
