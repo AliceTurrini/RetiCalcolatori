@@ -6,7 +6,7 @@ import java.net.*;
 public class RowSwap extends Thread{
 	private final String fileName;
 	private final int port;
-	private final static InetAddress IP=InetAddress.getLoopbackAddress();
+	//	private final static InetAddress IP=InetAddress.getLoopbackAddress();
 	//una volta inizializzata un'istanza di RawSwap, il nome del file e la porta non cambiano
 
 	public RowSwap(int port, String fileName) {
@@ -21,9 +21,8 @@ public class RowSwap extends Thread{
 
 		//preparo socket per la ricezione
 		try {
-			socket = new DatagramSocket(port,IP);
+			socket = new DatagramSocket(port);
 			packet = new DatagramPacket(buf_ricezione, buf_ricezione.length);
-			System.out.println("RowSwap: Creata la socket: " + socket+ "con ip "+socket.getInetAddress()+" e con porta "+socket.getPort());
 		}
 		catch (SocketException e) {
 			System.out.println("Problemi nella creazione della socket: ");
@@ -63,16 +62,10 @@ public class RowSwap extends Thread{
 				try {
 					biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());
 					diStream = new DataInputStream(biStream);
-					//lettura tipizzata come int ////IMPORTANTE
-					/*String richiesta=new String("");
-					richiesta=diStream.readUTF();
-					StringTokenizer st = new StringTokenizer(richiesta);
-					line1 = Integer.parseInt(st.nextToken());
-					line2 = Integer.parseInt(st.nextToken());*/
 					line1 = diStream.readInt();
 					line2 = diStream.readInt();
 					//redInt return the next four bytes of this input stream, interpreted as an int
-					System.out.println("Cliente vuole scambiare linea " + line1 + "e linea " + line2);
+					System.out.println("Cliente vuole scambiare linea " + line1 + " e linea " + line2);
 				}
 				catch (Exception e) {
 					System.err.println("Problemi nella lettura della richiesta");
@@ -87,7 +80,7 @@ public class RowSwap extends Thread{
 					//stampo messaggio dell'operazione in base all'esito di LineSwap
 					if(esito==-1) System.out.println("Errore operazione, righe inserite non valide");
 					if(esito==-2) System.out.println("Errore operazione, errore nell' IO da file");
-					else if(esito>0) System.out.println("Operazione eseguita con successo");
+					else if(esito>0) System.out.println("RowSwap: Operazione eseguita con successo");
 
 					boStream = new ByteArrayOutputStream();
 					doStream = new DataOutputStream(boStream);
