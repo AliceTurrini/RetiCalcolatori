@@ -18,12 +18,10 @@ import java.util.StringTokenizer;
 public class Client {
 	// porta nel range consentito 1024-65535!
 	// dichiarata come statica perchè caratterizza il server
-	private static final int PORT = 4445;
+	//	private static final int PORT = 4445;
 
 	public static void main(String[] args) {
 
-
-		//Usage: IPDS portDS fileName
 		InetAddress ipDS=null;
 		int portDS = -1;
 		String filename=null;
@@ -31,7 +29,7 @@ public class Client {
 		/*CONTROLLO ARGOMENTI*/
 		try {
 			if (args.length == 3) {
-				ipDS = InetAddress.getByName(args[0]);//lancia exception
+				ipDS = InetAddress.getByName(args[0]);
 				portDS = Integer.parseInt(args[1]);
 				filename=new String(args[2]);
 			} else {
@@ -54,8 +52,7 @@ public class Client {
 		/*INTERAZIONE CLIENTE DS*/
 		// creazione della socket datagram e creazione datagram packet
 		try {
-			socket = new DatagramSocket(PORT);//!NELLA SOCKET SI DEFINISCONO I PROPRI IP E PORT
-			//			socket.setSoTimeout(30000);
+			socket = new DatagramSocket();//!NELLA SOCKET SI DEFINISCONO I PROPRI IP E PORT
 			packet = new DatagramPacket(buf, buf.length, ipDS, portDS);//NEL PACKET DEFINISCO IP E PORT DEL DESTINATARIO
 			System.out.println("\nLineClient: avviato");
 			System.out.println("Creata la socket: " + socket);
