@@ -6,8 +6,8 @@ import java.net.*;
 public class RowSwap extends Thread{
 	private final String fileName;
 	private final int port;
-	//	private final static InetAddress IP=InetAddress.getLoopbackAddress();
 	//una volta inizializzata un'istanza di RawSwap, il nome del file e la porta non cambiano
+	//per questo gli attributi sono stati etichettati con "final"
 
 	public RowSwap(int port, String fileName) {
 		this.fileName = fileName;
@@ -25,7 +25,7 @@ public class RowSwap extends Thread{
 			packet = new DatagramPacket(buf_ricezione, buf_ricezione.length);
 		}
 		catch (SocketException e) {
-			System.out.println("Problemi nella creazione della socket: ");
+			System.out.println("RowSwap: Problemi nella creazione della socket: ");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -48,12 +48,12 @@ public class RowSwap extends Thread{
 				try {
 					packet.setData(buf_ricezione);
 					socket.receive(packet);
-					System.out.println("\nRowSwap: sono in ascolto sulla porta: "+socket.getPort());
-					System.out.println("\nRowSwap: in attesa di richieste...");
+					System.out.println("RowSwap: sono in ascolto sulla porta: "+socket.getPort());
+					System.out.println("RowSwap: in attesa di richieste...");
 					//sospensiva, mi metto in attesa di richieste...
 				}
 				catch (IOException e) {
-					System.err.println("Problemi nella ricezione del datagramma");
+					System.err.println("RowSwap: Problemi nella ricezione del datagramma");
 					e.printStackTrace();
 					esito=-2;
 				}
@@ -65,10 +65,10 @@ public class RowSwap extends Thread{
 					line1 = diStream.readInt();
 					line2 = diStream.readInt();
 					//redInt return the next four bytes of this input stream, interpreted as an int
-					System.out.println("Cliente vuole scambiare linea " + line1 + " e linea " + line2);
+					System.out.println("RowSwap: Cliente vuole scambiare linea " + line1 + " e linea " + line2);
 				}
 				catch (Exception e) {
-					System.err.println("Problemi nella lettura della richiesta");
+					System.err.println("RowSwap: Problemi nella lettura della richiesta");
 					e.printStackTrace();
 					esito=-1;
 				}
@@ -78,8 +78,8 @@ public class RowSwap extends Thread{
 					if(esito!=-1 && esito!=-2)
 						esito = LineSwap.swapLine(fileName, line1, line2);
 					//stampo messaggio dell'operazione in base all'esito di LineSwap
-					if(esito==-1) System.out.println("Errore operazione, righe inserite non valide");
-					if(esito==-2) System.out.println("Errore operazione, errore nell' IO da file");
+					if(esito==-1) System.out.println("RowSwap: Errore operazione, righe inserite non valide");
+					if(esito==-2) System.out.println("RowSwap: Errore operazione, errore nell' IO da file");
 					else if(esito>0) System.out.println("RowSwap: Operazione eseguita con successo");
 
 					boStream = new ByteArrayOutputStream();
@@ -90,7 +90,7 @@ public class RowSwap extends Thread{
 					socket.send(packet);
 				}
 				catch (IOException e) {
-					System.err.println("Errore scrittura stream");
+					System.err.println("RowSwap: Errore scrittura stream");
 					e.printStackTrace();
 					continue;
 				}
@@ -103,12 +103,9 @@ public class RowSwap extends Thread{
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("RawSwap: termino...");
+		System.out.println("RowSwap: termino...");
 		socket.close();
 
 	}
-
-
-
 
 }

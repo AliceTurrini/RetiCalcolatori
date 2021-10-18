@@ -16,9 +16,6 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 public class Client {
-	// porta nel range consentito 1024-65535!
-	// dichiarata come statica perchè caratterizza il server
-	//	private static final int PORT = 4445;
 
 	public static void main(String[] args) {
 
@@ -52,7 +49,7 @@ public class Client {
 		/*INTERAZIONE CLIENTE DS*/
 		// creazione della socket datagram e creazione datagram packet
 		try {
-			socket = new DatagramSocket();//!NELLA SOCKET SI DEFINISCONO I PROPRI IP E PORT
+			socket = new DatagramSocket();
 			packet = new DatagramPacket(buf, buf.length, ipDS, portDS);//NEL PACKET DEFINISCO IP E PORT DEL DESTINATARIO
 			System.out.println("\nLineClient: avviato");
 			System.out.println("Creata la socket: " + socket);
@@ -96,11 +93,12 @@ public class Client {
 			e.printStackTrace();
 			System.exit(-1);
 		}	
-		//sotto codice dopo che il client ha ricevuto dal DS il numero di porta del RowSwap
+		//sotto c'è il codice dopo che il client ha ricevuto dal DS il numero di porta del RowSwap
+		
 		//salvataggio numero di porta del row swap ricevuto dal ds
 		try {
 			biStream = new ByteArrayInputStream(packet.getData(), 0, packet.getLength());//creo dato in byte per la ricezione di byte
-			diStream = new DataInputStream(biStream);//incapsulo i byte ricevuti in un oggetto data stream
+			diStream = new DataInputStream(biStream);//incapsulo i byte ricevuti in un oggetto data input stream
 			portaRS = diStream.readInt();
 			System.out.println("Risposta: numero porta row swap " + portaRS);
 			if(portaRS<0) {
@@ -115,9 +113,6 @@ public class Client {
 		}
 
 		/*INTERAZIONE CLIENTE UTENTE*/		
-		//ri-creo la socket tra cliente e rs
-		//		socket = new DatagramSocket(portaRS,ipDS);//NB i rowswap e il ds sono nella stessa rete locale quindi uso lo stesso ip
-
 		int righe[]=new int[2];
 		String line=null;
 		StringTokenizer st;
@@ -195,7 +190,7 @@ public class Client {
 				}
 				if(esito==-2) {
 					System.out.println("L'esito è negativo: Row Swap con porta "+portaRS+"ha riscontrato degli errori di I/O nel file "+filename);
-					System.exit(-2);//per specifiche del programma
+					System.exit(-2);//per specifiche della consegna	
 				}
 				else {
 					System.out.println("\n^D(Unix)/^Z(Win)+invio per uscire, altrimenti inserisci altre righe da scambiare: ");

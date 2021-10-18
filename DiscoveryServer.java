@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -14,35 +13,11 @@ public class DiscoveryServer {
 
 
 	public static void main(String[] args) {
-		/*-------passaggio argomenti---------*/
-		/*verrà sempre invocato con coppie 
-		 * di argomenti che dicono al DS
-		 *  dove si deve trovare un RS e con 
-		 *  che file dovrà lavorare.
-		 *  
-		 *  
-		 *  è un po’ un name server che si tiene
-		una lista dei rs che ha generato con 
-		associato ad ognuno di essi la sua porta 
-		e il suo file, così può dare al cliente che 
-		invoca il DS specificando il nome del file 
-		(il cliente dovrà conoscere la porta del DS)
-		il numero della porta a cui il cliente dovrà rivolgersi.
-		 */
-
-		/*-------Controllo argomenti:---------*/
-		/*Il numero di porta deve essere diverso per ogni RS.
-		Il nome del file deve essere diverso per ogni RS. */
-
 		//OSS: devo avere un numero dispari di argomenti: tutte coppie + 1
 		if(args.length%2 ==0 || args.length<3 ) {
 			System.out.println("Usage: java DiscoveryServer portDS fileName1 port1 ... fileNameN portN");
 			System.exit(1);
 		}
-		//la porta deve essere "giusta" e non duplicata	
-		//il nome file deve essere non duplicato
-
-		//il primo argomento è la ds port
 
 		int i, j=0;
 		int num_coppie=(args.length-1)/2; //numero di RowSwap che verranno creati
@@ -90,9 +65,7 @@ public class DiscoveryServer {
 			}
 		}	//Fine controllo argomenti!
 
-		//mi creo ste cose solo se passo i controlli:
-		//sicuramente avrò bisogno di una socket e di un packet:
-		DatagramSocket socket=null; //comunicazione con cliente
+		DatagramSocket socket=null;
 		DatagramPacket packet=null;
 		byte[] buf = new byte[256];
 
@@ -110,7 +83,7 @@ public class DiscoveryServer {
 		}catch (SocketException | NumberFormatException  e) {
 			System.out.println("Problemi nella creazione della socket: ");
 			e.printStackTrace();
-			//		System.exit(1);
+			System.exit(1);
 		}
 
 		try {
@@ -123,7 +96,7 @@ public class DiscoveryServer {
 			ByteArrayOutputStream boStream = null;
 			DataOutputStream doStream = null;
 
-			//mi trasformo in un DEMONE (tutto dentro al while): aspetto le richieste dai clienti
+			//il discovery server si trasforma in un DEMONE (tutto dentro al while): aspetta le richieste dai clienti
 			while (true) {
 				System.out.println("\nIn attesa di richieste...");
 
@@ -147,12 +120,6 @@ public class DiscoveryServer {
 					richiesta = diStream.readUTF();
 					System.out.println("Richiesto file: " + richiesta);
 				}
-				catch (EOFException eof ) {//CLIENT è MORTO
-					System.err.println("Utente ha terminato l'operazione con il file: "+ richiesta);
-					eof.printStackTrace();
-
-					continue; // il server continua a fornire il servizio ricominciando dall'inizio del ciclo
-				}
 				catch( IOException e) {
 					System.err.println("Problemi nella lettura della richiesta: "+ richiesta);
 					e.printStackTrace();
@@ -171,29 +138,20 @@ public class DiscoveryServer {
 					System.exit(1);
 				}
 
-				//ora devo preparare a risposta in cui inserire la porta_row_swap necessaria al cliente:
-				//a chi la mando??
-				//I DRIVER FANNO DA SOLI GLI SCAMBI
-				//				porta_cliente = packet.getPort();
-				//				ip_cliente = packet.getAddress();
-
 				try {
 					boStream = new ByteArrayOutputStream();
 					doStream = new DataOutputStream(boStream);
 					doStream.writeInt(portaRS); 
 					buf = boStream.toByteArray(); //array di byte con dentro la info della portaRS!!
 
-					//					packet.setPort(porta_cliente);
-					//					packet.setAddress(ip_cliente);
-
 					packet.setData(buf, 0, buf.length);
 					socket.send(packet);
-					//mandiamo la riposta al client!!
+
 				}catch (IOException e) {
 					System.err.println("Problemi nell'invio della risposta: "+ e.getMessage());
 					e.printStackTrace();
 				}
-			} //FINE while GIGANTE!
+			} //FINE while
 
 		}catch (Exception e) { // qui catturo le eccezioni non catturate all'interno del while
 			e.printStackTrace();
