@@ -211,6 +211,8 @@ public class Client {
 		catch ( Exception  e) {
 			e.printStackTrace();
 		}
+
+
 		System.out.println("LineClient: termino...");
 		socket.close();
 	}
