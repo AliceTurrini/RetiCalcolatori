@@ -10,7 +10,7 @@ public class Cliente {
 		   
 		InetAddress addrS = null;
 		int portS = -1;
-		
+		//commento prova
 		//controllo argomenti: IpServer PortaServer
 		try{
 			if(args.length == 2){
