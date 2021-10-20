@@ -77,16 +77,15 @@ public class Cliente {
 				
 				File[] fileDir = dir.listFiles();
 				String nomeFile = new String();
+				
 				for (File file : fileDir) {
-					//controllo che lunghezza del file sia maggiore della soglia inserita dall'utente!
-					if(file.length() >= soglia) { 
+					if(file.length() >= soglia) { //controllo che lunghezza del file sia maggiore della soglia inserita dall'utente!
 						nomeFile=file.getName();
 						try{
 							inFile = new FileInputStream(nomeFile); //per ogni file creao il suo strem per leggere dal file
 						}catch(FileNotFoundException e){
-							System.out.println("Problemi nella creazione dello stream di input dal file "+ file);
+							System.out.println("Problemi nell'apetura del file "+ file);
 							e.printStackTrace();
-							System.out.print("\n^D(Unix)/^Z(Win)+invio per uscire, oppure immetti nome file: ");
 							continue;
 						}
 						
@@ -97,56 +96,53 @@ public class Cliente {
 						}catch(Exception e){
 							System.out.println("Problemi nell'invio del nome di " + nomeFile);
 							e.printStackTrace();
-							System.out.print("\n^D(Unix)/^Z(Win)+invio per uscire, oppure immetti nome file: ");
 							continue;
 						}
 						
 						//aspetto che il server mi dica se va bene:
-						String esito= inSock.readUTF();
-						if(esito.equals("attiva")) {
+						String esito = inSock.readUTF();
+						if(esito.equalsIgnoreCase("attiva")) {
+							//trasmissione file:
 							System.out.println("Inizio la trasmissione di " + nomeFile);
-							// trasferimento file:
-							try{
-								outSock.writeInt((int) file.length());							 // mando lunghezza
-								FileUtility.trasferisci(new DataInputStream(inFile), outSock);	 // mando file
-								inFile.close(); 			// chiusura FileInputStream
-								System.out.println("Trasmissione di " + nomeFile + " terminata ");
-							}
-//							catch(SocketTimeoutException ste){
-//								System.out.println("Timeout scattato: ");
-//								ste.printStackTrace();
-//								socket.close();
-//								System.out
-//									.print("\n^D(Unix)/^Z(Win)+invio per uscire, oppure immetti nome file: ");
-//								// il client continua l'esecuzione riprendendo dall'inizio del ciclo
-//								continue;          
-//							}
-							catch(Exception e){
+							try{ 	
+								outSock.writeInt((int) file.length());	// mando lunghezza
+								
+								for(int i=0;i<file.length(); i++) {		// mando contenuto
+									outSock.write(inFile.read());	
+								}
+								outSock.flush(); //sicuri?
+								inFile.close();
+								
+								System.out.println("Trasmissione di " + nomeFile + " terminata");
+							}catch(Exception e){
 								System.out.println("Problemi nell'invio di " + nomeFile);
 								e.printStackTrace();
 								continue;
 							}	
-							
-						}else { //server: "Salta file"
+						}else { //server: "Salta"
 							System.out.println("Il file "+nomeFile+" esiste già nella macchina server!");
 							continue; 
 						}
 						
-					}else {
-						System.out.println("Il file "+file+" è troppo piccolino, non verrà inviato al server!");
+					}else { //grandezza file < soglia :(
+						System.out.println("Il file "+file+" è troppo piccolo, non verrà inviato al server!");
 					}
 					
-				} //fuori dal ciclo for chiudo la socket (1 socket - 1 directory)
+				}//fine for
+				
+				//fuori dal ciclo for chiudo la socket (1 socket - 1 directory)
+				socket.shutdownInput();
 				socket.shutdownOutput(); 	// chiusura socket in upstream, invio l'EOF al server
 				System.out.println("Trasmissione di " + nomeDir + " terminata ");
 			
-			}//fine while (che chiede dir all'utente)
+			} //fine while (che chiede dir all'utente)
 		}catch(Exception e){
 			System.err.println("Errore irreversibile, il seguente: ");
 			e.printStackTrace();
 			System.err.println("Chiudo!");
 			System.exit(3); 
 	    }
+		
 	} // main
 	
 
