@@ -42,6 +42,11 @@ public class Cliente {
 				StringTokenizer st = new StringTokenizer(line);
 				nomeDir = st.nextToken();
 				soglia = Integer.parseInt(st.nextToken());
+				if(soglia<=0) {
+					System.out.println("Soglia negativa o nulla non valida");
+					System.out.print("Inserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
+					continue;
+				}
 
 				File dir= new File(nomeDir);
 				if(dir.exists() && dir.isDirectory()){ 				// se la directory esiste creo la socket
@@ -72,6 +77,7 @@ public class Cliente {
 				// se la richiesta non è corretta non proseguo!
 				else{
 					System.out.println("File non presente nel direttorio corrente!");
+					System.out.print("Inserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
 					continue;
 				}
 
