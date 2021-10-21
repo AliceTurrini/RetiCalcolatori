@@ -31,17 +31,17 @@ public class Cliente {
 		DataInputStream inSock = null;
 		DataOutputStream outSock = null;
 		String line = null, nomeDir=null;
-		int soglia = 0;
+		long soglia = 0;
 
 		// creazione stream di input da tastiera:
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 
-		System.out.print("Inserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
+		System.out.print("\nInserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
 		try{
 			while ((line=stdIn.readLine()) != null){
 				StringTokenizer st = new StringTokenizer(line);
 				nomeDir = st.nextToken();
-				soglia = Integer.parseInt(st.nextToken());
+				soglia = Long.parseLong(st.nextToken());
 				if(soglia<=0) {
 					System.out.println("Soglia negativa o nulla non valida");
 					System.out.print("Inserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
@@ -86,7 +86,8 @@ public class Cliente {
 					//controllo che lunghezza del file sia maggiore della soglia inserita dall'utente!
 					if(file.isFile()) {//se è una directory non la devo inviare!
 						if(file.length() >= soglia) { 
-							nomeFile=file.getName();
+							nomeFile=file.getAbsolutePath();
+							//creo il path assoluto del file altrimenti fallisce la creazione dell'input stream 
 							try{
 								inFile = new FileInputStream(nomeFile); //per ogni file creo il suo stream per leggere dal file
 							}catch(FileNotFoundException e){
