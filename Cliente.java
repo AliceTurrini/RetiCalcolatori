@@ -122,8 +122,6 @@ public class Cliente {
 									for (int i = 0; i < file.length(); i++) { // mando contenuto
 										outSock.write(inFile.read());
 									}
-									outSock.flush(); // forces data to the underlying file output stream, svuoto il
-														// buffer
 									inFile.close(); // chiusura FileInputStream
 									System.out.println("Trasmissione di " + nomeFile + " terminata ");
 								} catch (Exception e) {
@@ -144,10 +142,9 @@ public class Cliente {
 					}
 				} // fuori dal ciclo for chiudo la socket (1 socket per 1 directory)
 				socket.shutdownInput();
+				System.out.println("Trasmissione di " + nomeDir + " terminata ");
 				socket.shutdownOutput(); // chiusura socket in upstream, invio l'EOF al server
 				socket.close();
-				System.out.println("Trasmissione di " + nomeDir + " terminata ");
-
 			} // fine while (che chiede dir all'utente)
 		} catch (Exception e) {
 			System.err.println("Errore irreversibile, il seguente: ");

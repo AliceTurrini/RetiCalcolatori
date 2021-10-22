@@ -53,7 +53,6 @@ class ServerParThread extends Thread{
 			} //fine while
 
 			clientSocket.shutdownInput(); //chiusura socket (downstream)
-			outSock.flush();
 			clientSocket.shutdownOutput(); //chiusura socket (dupstream)
 			System.out.println("\nTerminata connessione con " + clientSocket);
 			clientSocket.close();
