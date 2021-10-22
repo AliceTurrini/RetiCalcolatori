@@ -1,5 +1,4 @@
-%CATE: COME CAZZO SI USA QUESTO PROGRAMMA 
-ciao amïoooo <3
+Ali: ce la possiamo fareee
 
-
+provo a vedere se vi arriva qualche notifica
 # RetiCalcolatori
