@@ -59,7 +59,7 @@ public class Cliente {
 						System.out.println("Problemi nella creazione della socket: ");
 						e.printStackTrace();
 						System.out
-								.print("Inserisci nome Directory e Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
+								.print("Inserisci nome Directory e la lunghezza massima del file, oppure per uscire: \n^D(Unix)/^Z(Win): ");
 						continue;
 					}
 
@@ -71,15 +71,15 @@ public class Cliente {
 						System.out.println("Problemi nella creazione degli stream su socket: ");
 						e.printStackTrace();
 						System.out
-								.print("Inserisci nome Directory e Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
+								.print("Inserisci nome Directory e la lunghezza massima del file, oppure per uscire: \n^D(Unix)/^Z(Win): ");
 						continue;
 					}
 				}
-				// se la richiesta non è corretta non proseguo!
+				// se la richiesta non Ã¨ corretta non proseguo!
 				else {
 					System.out.println("Directory non esiste nella macchina locale!");
 					System.out.print(
-							"Inserisci nome Directory e la sua Lunghezza, oppure per uscire: \n^D(Unix)/^Z(Win): ");
+							"Inserisci nome Directory e la lunghezza massima del file, oppure per uscire: \n^D(Unix)/^Z(Win): ");
 					continue;
 				}
 
@@ -87,7 +87,7 @@ public class Cliente {
 				for (File file : dir.listFiles()) {
 					// controllo che lunghezza del file sia maggiore della soglia inserita
 					// dall'utente!
-					if (file.isFile()) {// se è una directory non la devo inviare!
+					if (file.isFile()) {// se Ã¨ una directory non la devo inviare!
 						if (file.length() >= soglia) {
 							nomeFile = file.getAbsolutePath();
 							// creo il path assoluto del file altrimenti fallisce la creazione dell'input
@@ -122,6 +122,7 @@ public class Cliente {
 									for (int i = 0; i < file.length(); i++) { // mando contenuto
 										outSock.write(inFile.read());
 									}
+									outSock.flush();
 									inFile.close(); // chiusura FileInputStream
 									System.out.println("Trasmissione di " + nomeFile + " terminata ");
 								} catch (Exception e) {
@@ -131,13 +132,13 @@ public class Cliente {
 								}
 
 							} else { // server: "Salta file"
-								System.out.println("Il file " + nomeFile + " esiste già nella macchina server!");
+								System.out.println("Il file " + nomeFile + " esiste giÃ  nella macchina server!");
 								continue;
 							}
 
 						} else {
-							System.out.println("Il file " + file + " è di dimensione minore della soglia " + soglia
-									+ ", non verrà inviato al server!");
+							System.out.println("Il file " + file + " Ã¨ di dimensione minore della soglia " + soglia
+									+ ", non verrÃ  inviato al server!");
 						}
 					}
 				} // fuori dal ciclo for chiudo la socket (1 socket per 1 directory)
