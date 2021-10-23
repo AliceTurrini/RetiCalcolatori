@@ -44,6 +44,7 @@ class ServerParThread extends Thread{
 						for(int i=0;i<length; i++) {
 							outFile.write(inSock.read()); //scrivo sul file il byte che leggo dalla socket del cliente
 						}
+						outFile.flush();
 						outFile.close();
 					}catch (Exception e) {
 						System.err.println("\nProblemi durante la ricezione e scrittura del file: "+nomeFile+ e.getMessage());
