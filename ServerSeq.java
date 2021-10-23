@@ -37,7 +37,7 @@ public class ServerSeq {
 
 		try {
 			serverSocket = new ServerSocket(port);
-			serverSocket.setReuseAddress(true); //si possono collegare più processi ad una certa porta (senza errori binding)
+			serverSocket.setReuseAddress(true); //si possono collegare piÃ¹ processi ad una certa porta (senza errori binding)
 			System.out.println("ServerSeq: avviato, creata la socket: "+ serverSocket);
 		}catch (Exception e) {
 			System.err.println("ServerSeq: problemi nella creazione della server socket: " + e.getMessage());
@@ -86,11 +86,12 @@ public class ServerSeq {
 							long length = inSock.readLong();
 
 							System.out.println("Ricevo il file " + nomeFile + ", di lunghezza: "+length);
-							try {//se non c'è curFile allora viene creato con il file output stream
+							try {//se non c'Ã¨ curFile allora viene creato con il file output stream
 								FileOutputStream outFile = new FileOutputStream(curFile);//DEBUG:dopo debug metto outFile al posto di curFile!!!
 								for(int i=0;i<length; i++) {
 									outFile.write(inSock.read()); //scrivo sul file il byte che leggo dalla socket del cliente
 								}
+								outFile.flush();
 								outFile.close();
 							}
 							catch (Exception e) {
