@@ -129,15 +129,6 @@ public class Cliente {
 									inFile.close(); 			// chiusura FileInputStream
 									System.out.println("Trasmissione di " + nomeFile + " terminata ");
 								}
-								//							catch(SocketTimeoutException ste){
-								//								System.out.println("Timeout scattato: ");
-								//								ste.printStackTrace();
-								//								socket.close();
-								//								System.out
-								//									.print("\n^D(Unix)/^Z(Win)+invio per uscire, oppure immetti nome file: ");
-								//								// il client continua l'esecuzione riprendendo dall'inizio del ciclo
-								//								continue;          
-								//							}
 								catch(Exception e){
 									System.out.println("Problemi nell'invio di " + nomeFile);
 									e.printStackTrace();
@@ -154,8 +145,10 @@ public class Cliente {
 						}
 					}
 				} //fuori dal ciclo for chiudo la socket (1 socket per 1 directory)
-				socket.shutdownOutput(); 	// chiusura socket in upstream, invio l'EOF al server
+				socket.shutdownInput();
 				System.out.println("Trasmissione di " + nomeDir + " terminata ");
+				socket.shutdownOutput(); // chiusura socket in upstream, invio l'EOF al server
+				socket.close();
 
 			}//fine while (che chiede dir all'utente)
 		}catch(Exception e){
