@@ -122,6 +122,7 @@ public class ServerSeq {
 			e.printStackTrace();
 			// chiusura di stream e socket
 			System.out.println("ServerPar: termino...");
+			serverSocket.close();
 			System.exit(2);
 		}
 
