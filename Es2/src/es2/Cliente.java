@@ -82,14 +82,16 @@ public class Cliente {
 				}
 
 				String nomeFile = new String();
+				String pathFile = new String();
+
 				for (File file : dir.listFiles()) {
 					//controllo che lunghezza del file sia maggiore della soglia inserita dall'utente!
 					if(file.isFile()) {//se è una directory non la devo inviare!
 						if(file.length() >= soglia) { 
-							nomeFile=file.getAbsolutePath();
-							//creo il path assoluto del file altrimenti fallisce la creazione dell'input stream 
+							nomeFile=file.getName();//devo passare solo il nome del file al server
+							pathFile=file.getAbsolutePath();//creo il path assoluto del file altrimenti fallisce la creazione dell'input stream 
 							try{
-								inFile = new FileInputStream(nomeFile); //per ogni file creo il suo stream per leggere dal file
+								inFile = new FileInputStream(pathFile); //per ogni file creo il suo stream per leggere dal file
 							}catch(FileNotFoundException e){
 								System.out.println("Problemi nella creazione dello stream di input dal file "+ file);
 								e.printStackTrace();

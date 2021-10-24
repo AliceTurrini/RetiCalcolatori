@@ -44,7 +44,7 @@ public class ServerSeq {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
+		long start=0;
 		try {
 			while (true) { //demone
 				System.out.println("Server: in attesa di richieste...\n");
@@ -58,6 +58,8 @@ public class ServerSeq {
 					continue;
 				}
 				try {
+					//controllo tempistiche: faccio partire il timer da quando processa la directory
+					start=System.currentTimeMillis();//controllo tempistiche
 					DataInputStream inSock;
 					DataOutputStream outSock;
 					String nomeFile;
@@ -73,11 +75,6 @@ public class ServerSeq {
 					}
 
 					while((nomeFile=inSock.readUTF())!=null) { //leggo tutti i file della directory
-						//						//PER DEBUG
-						//						String onlyName= nomeFile.substring(nomeFile.lastIndexOf("\\")+1);
-						//						String  pathToCheck= FS+"\\"+  onlyName;
-						//						File curFile = new File(pathToCheck);
-						//						if (curFile.exists()) {
 						File curFile = new File(nomeFile);
 						if (curFile.exists()) {
 							outSock.writeUTF("Salta"); //mandiamo esito al cliente
@@ -96,6 +93,7 @@ public class ServerSeq {
 							catch (Exception e) {
 								System.err.println("\nProblemi durante la ricezione e scrittura del file: "+nomeFile+ e.getMessage());
 								e.printStackTrace();
+								continue;
 							}
 						}
 					} //fine while
@@ -116,6 +114,8 @@ public class ServerSeq {
 					System.exit(3);
 				}
 
+				long end=System.currentTimeMillis();//controllo tempistiche	
+				System.out.println("Server Seq: took "+(end-start)+" milliseconds\n");//controllo tempistiche
 			} //fine while
 
 		}catch (Exception e) { // qui catturo le eccezioni non catturate all'interno del while
@@ -124,6 +124,7 @@ public class ServerSeq {
 			System.out.println("ServerPar: termino...");
 			System.exit(2);
 		}
+
 
 	}
 } // ServerPar class
