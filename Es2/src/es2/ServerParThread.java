@@ -44,6 +44,7 @@ class ServerParThread extends Thread{
 						for(int i=0;i<length; i++) {
 							outFile.write(inSock.read()); //scrivo sul file il byte che leggo dalla socket del cliente
 						}
+						outFile.flush();
 						outFile.close();
 
 					}
@@ -67,7 +68,13 @@ class ServerParThread extends Thread{
 		catch (Exception e) {  //qui catturo le eccezioni non catturate all'interno del while
 			e.printStackTrace();
 			System.out.println("Errore irreversibile, PutFileServerThread: termino...");
-			System.exit(3);
+		}finally {
+			try {
+				clientSocket.close();
+				System.exit(3);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		long end=System.currentTimeMillis();
 		System.out.println("Server Par: end is at "+end +" milliseconds\n");//controllo tempistiche
