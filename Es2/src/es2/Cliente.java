@@ -155,6 +155,13 @@ public class Cliente {
 			System.err.println("Errore irreversibile, il seguente: ");
 			e.printStackTrace();
 			System.err.println("Chiudo!");
+		}
+		finally {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			System.exit(3); 
 		}
 	} // main
