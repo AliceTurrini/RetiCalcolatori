@@ -15,15 +15,6 @@
 #define DIM_BUFF 32
 #define MAX_FILE_LENGTH 1024
 
-/*Struttura di una richiesta*/
-/********************************************************/
-typedef struct{
-	char nomeFile[STRING_LENGTH];
-	long num_riga;//numero della riga da eliminare
-
-}Request;
-/********************************************************/
-
 //un filtro è un programma che riceve in ingresso da input e produce uno opiù risultati in output.
 //Un filtro deve consumare tutto lo stream in ingresso e portare in uscita il contenuto filtrato
 
@@ -34,12 +25,12 @@ int main(int argc, char **argv){
 	struct sockaddr_in clientaddr, servaddr;
 	int  port, sd, num1, num2, len,  ok;
 	char okstr[LINE_LENGTH];
+	int num_riga;
 
 
 	//mie var
 	int fd, tot_righe, nread=0;
 	char nomeFile[STRING_LENGTH]; char ris[MAX_FILE_LENGTH]; char buff[DIM_BUFF];
-	Request req;
 	char ch;
 
 
@@ -96,23 +87,13 @@ int main(int argc, char **argv){
 	//se invece viene passato EOF allora termina
 	//la funzione gets acquisisce una stringa da tastiera compresi eventuali spazi e ritorno a capo
 	// il quale viene trasformato in carattere terminatore
-	do{
-		gets(req.nomeFile);
+	while(gets(nomeFile)!=NULL){
 		//client cicla fino a che il cliente non immette EOF
-				if((fd = open(req.nomeFile, O_RDONLY)) < 0){
+				if((fd = open(nomeFile, O_RDONLY)) < 0){
 					perror("[ClientStream] Apertura file non avvenuta\n");
 					exit(EXIT_FAILURE);
 				}
 
-				//conto il numero di righe che il file contiene
-				tot_righe=0;
-				while( read(fd, &ch, sizeof(char))>0 )
-				{
-					if( ch=='\n')
-						tot_righe++;
-				}
-				tot_righe++;
-				printf("Il file ha %d righe\n",tot_righe);
 				//chiedo all'utente le righe da eliminare
 				//le righe partono da indice 1
 				printf("[ClientStream] Inserire numero riga da eliminare e premere invio:\n");
@@ -120,7 +101,7 @@ int main(int argc, char **argv){
 				//la scanf ritorna un valore EOF se ha letto EOF e quindi non ha convertito nlla
 				//la scanf ritorna il numero di valori letti (nel nostro caso deve ritornare 1)
 				//dato che il num riga p un long unsigned int, metto il formato %lu
-				while( (ok=scanf("%lu", &req.num_riga) !=1 )){
+				while( (ok=scanf("%lu", &num_riga) !=1 )){
 					/* Problema nell'implementazione della scanf.
 					Se l'input contiene PRIMA dell'intero altri caratteri la testina di lettura si blocca sul primo carattere
 					 * (non intero) letto. Ad esempio: ab1292\n
@@ -131,11 +112,6 @@ int main(int argc, char **argv){
 					do {ch=getchar(); printf("%c ", ch);}
 					while (ch!= '\n');
 					printf("[ClientStream] Inserire numero riga da eliminare e premere invio:\n");
-				}
-
-				if(req.num_riga<=0 && req.num_riga>tot_righe){
-					perror("[ClientStream] Impossibile eliminare la riga inserita\n");
-					exit(EXIT_FAILURE);
 				}
 
 				//trasferire contenuto file al server
@@ -150,7 +126,7 @@ int main(int argc, char **argv){
 				printf("Client: connect ok\n");
 
 				//trasferimento numero riga da eliminare
-				write(sd, &req.num_riga, sizeof(long));
+				write(sd, &num_riga, sizeof(long));
 				printf("[ClientStream] Spedita riga da eliminare\n");
 
 				//faccio una scrittura bufferizzata
@@ -168,7 +144,7 @@ int main(int argc, char **argv){
 
 				/*RICEZIONE File*/
 				printf("Client: ricevo e stampo file modificato\n");
-				if((fd = open(req.nomeFile, O_TRUNC|O_WRONLY)) < 0){
+				if((fd = open(nomeFile, O_TRUNC|O_WRONLY)) < 0){
 							perror("\n[ClientStream] Apertura file non avvenuta\n");
 							exit(EXIT_FAILURE);
 						}
@@ -184,7 +160,7 @@ int main(int argc, char **argv){
 				close(sd);
 				printf("\n[ClientStream] Inserisci nomefile remoto, EOF per terminare: \n");
 
-	}while(gets(req.nomeFile)!=EOF);
+	}
 	printf("\n[ClientStream] termino...\n");
 	exit(EXIT_SUCCESS);
 
