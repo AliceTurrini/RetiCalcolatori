@@ -10,17 +10,11 @@
 #define MAX_NOMEFILE 64
 #define PORT 2345
 
-/*Struttura di una richiesta*/
-typedef struct{
-	char nomeFile[MAX_NOMEFILE];
-}Request;
-
 int main(int argc, char **argv){
 	struct hostent *host;
 	struct sockaddr_in clientaddr, servaddr;
 	int  port, sd, i=0, ok, ris, len;
-    char temp[MAX_NOMEFILE], c;
-	Request req;
+    char nomeFile[MAX_NOMEFILE], c;
 
 	/* CONTROLLO ARGOMENTI */
 	if(argc!=3){
@@ -80,13 +74,12 @@ int main(int argc, char **argv){
 	/* CORPO DEL CLIENT: ciclo di accettazione di richieste da utente */
 	printf("Inserire nome file remoto, EOF per terminare: ");
 
-	while(gets(temp) != NULL){ //se legge EOF gets ritorna NULL
-		strcpy(req.nomeFile, temp);
-        printf("Ho letto il nomeFile: %s", req.nomeFile);
+	while(gets(nomeFile) != NULL){ //se legge EOF gets ritorna NULL
+        printf("Ho letto il nomeFile: %s", nomeFile);
 
 		/* richiesta operazione */
         len=sizeof(servaddr);
-		if(sendto(sd, &req, sizeof(Request), 0, (struct sockaddr *)&servaddr, len)<0){
+		if(sendto(sd, &nomeFile, sizeof(nomeFile), 0, (struct sockaddr *)&servaddr, len)<0){
 			perror("sendto");
             printf("Inserire nome file remoto, EOF per terminare: ");
 			continue;
@@ -99,7 +92,7 @@ int main(int argc, char **argv){
             continue;
         }
 
-		printf("Esito dell'operazione: lunghezza della parola più grande e' %d\n", (int)ntohl(ris), ris);
+		printf("Esito dell'operazione: lunghezza della parola più grande e' %d\n", ris);
 		printf("Inserisci nomefile remoto, EOF per terminare: ");
 	} //while utente
 	
