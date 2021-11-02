@@ -14,17 +14,12 @@
 #define MAX_NOMEFILE 64
 #define MAX_STRINGA 1024
 
-/*Struttura di una richiesta*/
-typedef struct{
-    char nomeFile[MAX_NOMEFILE];
-}Request;
-
 int main(int argc, char **argv){
 	int sd, port, len, ris, i, fd, pid;
 	const int on = 1; //Serve a indicare al compilatore che il valore di una certa variabile non può essere modificato durante l'esecuzione del programm
 	struct sockaddr_in cliaddr, servaddr;
 	struct hostent *clienthost;
-	Request* req = NULL;
+    char nomeFile[MAX_NOMEFILE];
 
 	/* CONTROLLO ARGOMENTI */
 	if(argc!=2){
@@ -80,23 +75,22 @@ int main(int argc, char **argv){
     //quindi associano una socket ad ogni richiesta 
     //delego ad un figlio, padre fa subito un'altra recv!!
 
-	req=(Request*)malloc(sizeof(Request));
     for(;;){
 		len=sizeof(struct sockaddr_in);
-		if (recvfrom(sd, req, sizeof(Request), 0, (struct sockaddr *)&cliaddr, &len)<0){
+		if (recvfrom(sd, nomeFile, sizeof(nomeFile), 0, (struct sockaddr *)&cliaddr, &len)<0){
             perror("errore in ricezione ");
             continue;
         }
 
 		/*CREO FIGLIO: leggere file e trovare lunghezza max*/
-        fd=open(req->nomeFile, O_RDONLY);
+        fd=open(nomeFile, O_RDONLY);
         if (fd < 0){
-			printf("P0: Impossibile aprire il file %s\n", req->nomeFile); 	//c'è stato un errore con quel file!
+			printf("P0: Impossibile aprire il file %s\n", nomeFile); 	//c'è stato un errore con quel file!
 			ris=-1;
 			ris=htonl(ris);  
                 if (sendto(sd, &ris, sizeof(ris), 0, (struct sockaddr *)&cliaddr, len)<0){
                     printf("P0: errore nella sendto \n", getpid()); 
-                    free(req);
+
                     exit(1);
                 }
 		}else{
@@ -112,18 +106,16 @@ int main(int argc, char **argv){
 
                 while(nread=(read(fd, &c, sizeof(char)))) /*se nread==0 allora ha letto EOF*/{
                     if(nread<0){
-                        printf("(PID %d) impossibile leggere dal file %s\n", getpid(), req->nomeFile);	
+                        printf("(PID %d) impossibile leggere dal file %s\n", getpid(), nomeFile);	
                         perror("Errore!");
                         
                         //mando comunque esito al cliente!
                         ris=-ris; //valore calcolato fino al errore, se arriva negativo al client significa errore
                         if (sendto(sd, &ris, sizeof(ris), 0, (struct sockaddr *)&cliaddr, len)<0){
                             printf("Figlio (pid %d): errore nella sendto \n", getpid()); 
-                            free(req);
                             exit(1);
                         }
                         close(fd);
-                        free(req);
                         exit(3);
                     }
 
@@ -136,13 +128,12 @@ int main(int argc, char **argv){
                         count=1;
                     }
                 }
-                printf("Figlio (pid %d): Lunghezza max del file %s e' %d\n", getpid(), req->nomeFile, ris);
+                printf("Figlio (pid %d): Lunghezza max del file %s e' %d\n", getpid(),nomeFile, ris);
 				
                 //invio al client la lunghezza trovata:
                 ris=htonl(ris);  
                 if (sendto(sd, &ris, sizeof(ris), 0, (struct sockaddr *)&cliaddr, len)<0){
                     printf("Figlio (pid %d): errore nella sendto \n", getpid()); 
-                    free(req);
                     exit(1);
                 }
 				close(fd);
