@@ -1,5 +1,3 @@
-/* ClientDatagram: (filtro) utente passa nomeFile remoto, e manda al server, poi riceve la lunghezza della parola più lunga */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -82,22 +80,7 @@ int main(int argc, char **argv){
 	/* CORPO DEL CLIENT: ciclo di accettazione di richieste da utente */
 	printf("Inserire nome file remoto, EOF per terminare: ");
 
-	/* ATTENZIONE!!
-	* Cosa accade se la riga e' piu' lunga di MAX_NOMEFILE-1?
-	*/
-    // char a;
-    // while((read(0, &a, sizeof(char)))>0){  
-    //    int i=0;
-    //     while((read(0, &c, sizeof(char)))>0){
-    //             if(c!='\n'){
-    //                 req.nomeFile[i]=c;
-    //                 i++;
-    //             }
-    //         } 
-    // }
-
-	while (scanf("%s", &temp) != EOF){         
-
+	while(gets(temp) != NULL){ //se legge EOF gets ritorna NULL
 		strcpy(req.nomeFile, temp);
         printf("Ho letto il nomeFile: %s", req.nomeFile);
 
