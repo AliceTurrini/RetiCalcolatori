@@ -16,11 +16,6 @@
 #define MAX_FILE_LENGTH 1024
 #define SIZE_BUFF 64
 
-/*Struttura di una richiesta*/
-typedef struct{
-	long num_riga;//numero della riga da eliminare
-}Request;
-
 /********************************************************/
 void gestore(int signo){
 	int stato;
@@ -36,8 +31,7 @@ int main(int argc, char **argv){
 	struct sockaddr_in cliaddr, servaddr;
 	struct hostent *host;
 	char buff[SIZE_BUFF];
-
-	Request* req = NULL;
+	int num_riga;
 
 	/* CONTROLLO ARGOMENTI ---------------------------------- */
 	if(argc!=2){
@@ -98,8 +92,6 @@ int main(int argc, char **argv){
 	//quindi associano una socket ad ogni richiesta
 	//delego ad un figlio, padre fa subito un'altra recv!!
 
-	req=(Request*)malloc(sizeof(Request));
-
 	/* CICLO DI RICEZIONE RICHIESTE --------------------------------------------- */
 	for(;;){
 		len=sizeof(cliaddr);
@@ -118,7 +110,7 @@ int main(int argc, char **argv){
 			char c; int nread, riga_corrente=1;//file indicizzato con indice che parte da 1
 
 			//leggo il numero di riga
-			if((nread=read(conn_sd, &req->num_riga, sizeof(int)))<0){
+			if((nread=read(conn_sd, &num_riga, sizeof(int)))<0){
 				printf("(PID %d) impossibile leggere il numero della riga da eliminare dalla socket %d\n", getpid(), conn_sd);
 				perror("Errore!");
 
@@ -126,16 +118,11 @@ int main(int argc, char **argv){
 				strcpy(buff,"ERRORE LETTURA NUMERO DI RIGA, RIPETERE L'OPERAZIONE");
 				if (write(conn_sd, buff, sizeof(buff))<0){
 					printf("Figlio (pid %d): errore nella sendto \n", getpid());
-					free(req);
-					exit(EXIT_FAILURE);
+										exit(EXIT_FAILURE);
 				}
-				//chiudo la connessione quando non riesce la lettura ?
-				//					close(conn_sd);
-				//					free(req);
-				//					exit(EXIT_FAILURE);
 				continue;
 			}
-			printf("(PID %d) ho letto il numero di linea %lu\n",getpid(), req->num_riga);
+			printf("(PID %d) ho letto il numero di linea %lu\n",getpid(), num_riga);
 
 			//lettura file
 			//lettura carattere a carattere perchè cerco '\n'
@@ -148,21 +135,17 @@ int main(int argc, char **argv){
 					strcpy(buff,"ERRORE LETTURA FILE, RIPETERE L'OPERAZIONE");
 					if (write(conn_sd, buff, sizeof(buff))<0){
 						printf("Figlio (pid %d): errore nella sendto \n", getpid());
-						free(req);
 						exit(EXIT_FAILURE);
 					}
-					//						close(conn_sd);
-					//						free(req);
-					//						exit(EXIT_FAILURE);
+
 					continue;
 				}
 
 				//se arrivo qui ho letto il numero di linea e un solo carattere
 				printf("%c",c);
-				if(req->num_riga !=riga_corrente){//se non sono nella riga che devo eliminare allora devo scrivere il carattere letto
+				if(num_riga !=riga_corrente){//se non sono nella riga che devo eliminare allora devo scrivere il carattere letto
 					if (write(conn_sd, &c, sizeof(char))<0){
 						printf("Figlio (pid %d): errore nella sendto \n", getpid());
-						free(req);
 						exit(EXIT_FAILURE);
 					}
 				}
