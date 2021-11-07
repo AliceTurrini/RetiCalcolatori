@@ -38,7 +38,7 @@ int main(int argc, char **argv){
 
 	/* CONTROLLO ARGOMENTI ---------------------------------- */
 	if(argc!=2){
-		printf("Error: %s port\n", argv[0]);
+		printf("Error: %s port!\n", argv[0]);
 		exit(1);
 	}
 	nread = 0;
@@ -109,33 +109,34 @@ int main(int argc, char **argv){
 		if (select(maxSd, &rset, NULL, NULL, NULL)<0){
 			if (errno==EINTR) continue;
 			else {
-				perror("select"); 
+				perror("Errore grave: select"); 
 				exit(8);
 			}
 		}
 
 		/* GESTIONE RICHIESTE DI NOMI FILE NELLE DIRECTORY DI II LIVELLOv ------- */
 		if (FD_ISSET(tcpSd, &rset)){
-			printf("Ricevuto nome directory\n");
+			printf("--->\n\nRicevuta richiesta di directory\n");
 			len = sizeof(struct sockaddr_in);
 
 			if((connfd = accept(tcpSd,(struct sockaddr *)&cliaddr,&len))<0){ //connfd -> fd socket cliente
 				if (errno==EINTR) continue;
 				else {
-					perror("accept"); 
+					perror("Errore: accept"); 
 					exit(9);
 				}
 			}
 
 			if (fork()==0){ /* processo figlio che serve la richiesta di operazione */
 				DIR *dir, *dir2;
-				struct dirent * dd;
-				struct dirent * dd2;
+				struct dirent * dd, * dd2;
+				char dirServer[DIM_STRING];
+				getcwd(dirServer, DIM_STRING);
 
 				close(tcpSd);
 				printf("Dentro il figlio, pid=%i\n", getpid());
-
-				while((read(connfd, &nome_dir, sizeof(nome_dir)))>=0){ //continuo finch� client non invia EOF (read ritorna -1)
+				int count=0;
+				while((read(connfd, &nome_dir, sizeof(nome_dir)))>=0){ //continuo finchè client non invia EOF (read ritorna -1)
 					printf("Richiesta la directory %s\n", nome_dir);
 
 					if((dir = opendir(nome_dir))==NULL){ //in caso dir non esiste NON chiudo la connessione ma procedo
@@ -144,16 +145,48 @@ int main(int argc, char **argv){
 						write(connfd, error , sizeof(error));
 
 					} else {
+						printf("Ho aperto %s la dir di 1° livello, ora leggo contenuto..\n", nome_dir);
 						while ((dd = readdir(dir)) != NULL){
-							if((dir2 = opendir(dd->d_name))!=NULL){ // dir2 � una directory, non un file!
-								while ((dd2 = readdir(dir2)) != NULL){
-									printf("Trovato il file %s\n", dd2-> d_name);
-									write(connfd, dd2-> d_name , sizeof(dd2-> d_name));
+							
+							printf("dentro a dir1: trovato %s  \t\t", dd->d_name);
+							if(dd->d_type == DT_DIR && strcmp(dd->d_name, ".")!=0 && strcmp(dd->d_name, "..")!=0){ 
+								printf("--di cui %s e' una directory che ci piace!\n", dd->d_name);
+								
+								char path1[DIM_STRING];
+								getcwd(path1, DIM_STRING);
+								strcat(path1, "/");
+								strcat(path1, nome_dir);
+								chdir(path1);
+
+								if((dir2 = opendir(dd->d_name))==NULL){
+									printf("\nErrore apertura directory 2° livello\n", dir2);
+									char error[]="\nSERVER: Errore apertura directory 2° livello\n";
+									write(connfd, error , sizeof(error));
+								}else{
+									printf("\nHo aperto %s la dir di 2° livello, ora cerco file!\n", dd->d_name);
+
+									while ((dd2 = readdir(dir2)) != NULL){
+										//printf("dentro a dir2: trovato %s\t", dd->d_name);
+										if(dd2->d_type == DT_REG){
+											printf("\n|%d|\n",strlen(dd2-> d_name));
+											write(connfd, dd2-> d_name , strlen(dd2-> d_name));
+											char space=' ';
+											write(connfd, &space, sizeof(char));
+											printf("dir2: trovato il file %s, inviato al client!\n", dd2-> d_name);
+											count++;
+										}
+									}
+									printf("--fine while ho trovato %d file dentro alla directory di sec liv--\n", count);
+									closedir(dir2);
 								}
 							}
 						}
+						printf("Ho trovato %s file dentro la dir di 2° livello!!\n", count);
+						closedir(dir);
+						chdir(dirServer);
 					}
 				}//while
+				
 				printf("Figlio %i: chiudo connessione e termino\n", getpid());
 				close(connfd);
 				exit(0);
@@ -165,25 +198,27 @@ int main(int argc, char **argv){
 
 		/* GESTIONE RICHIESTE DI ELIMINAZIONE OCCORRENZE PAROLA */
 		if (FD_ISSET(udpSd, &rset)){
-			printf("Server: ricevuta richiesta di eliminazione occorrenza parola\n");
+			printf("\n\n---> Server: ricevuta richiesta di eliminazione occorrenza parola\n");
 			len=sizeof(struct sockaddr_in);
 			if (recvfrom(udpSd, &line, sizeof(line), 0, (struct sockaddr *)&cliaddr, &len)<0){
 				perror("Errore: recvfrom"); 
 				continue;
 			}
 			//sistemo i due dati:
+			//printf("prima di sistemare, al server arriva:%s", line);
 			i=0;
 			while(line[i]!=sep){	//sep = '?'
-				nomeFile[i]=line[i++];
+				nomeFile[i]=line[i];
+				i++;
 			}
-			i++; //mangio sep
 			nomeFile[i]='\0';
-			printf("Ho letto il nome del file %s\n",nomeFile);
+			i++; //mangio sep
+			printf("Ho letto il nome del file: %s\n",nomeFile);
 			j=0;
 			while(line[i]!='\0'){
 				parola[j++]=line[i++];
 			}
-			parola[j++]='\0';
+			parola[j]='\0';
 			printf("Ho letto parola: %s\n",parola);
 
 			if ((fdFile=open(nomeFile, O_RDONLY))<0){
@@ -194,8 +229,9 @@ int main(int argc, char **argv){
 					continue;
 				}
 			}else{
+				printf("HO APERTO IL FILE\n");
 				strcpy(temp_file, "temp.txt");
-				if((temp=open(temp_file, O_WRONLY))<0){
+				if((temp=open(temp_file, O_CREAT | O_RDWR, 0777))<0){
 					printf("Errore apertura file temp\n");
 					numEliminated=-1;
 					if (sendto(udpSd, &numEliminated, sizeof(numEliminated), 0, (struct sockaddr *)&cliaddr, len)<0){
@@ -203,34 +239,41 @@ int main(int argc, char **argv){
 						continue;
 					}
 				}else{
+					printf("HO APERTO TEMP\n");
 					i=0;
 					while(read(fdFile, &c, 1) > 0){
-						if(c!=' ' || c!='\n'){
+						//printf("%c", c);
+						if(c!=' ' && c!='\n'){
 							word[i++]=c;
 						}
 						else{ //ho letto una parola intera, ora confronto:  (strcmp ritorna -1 se la prima stringa � minore, 0 se sono uguali, 1 se maggiori)
+							word[i]='\0';
+							
 							if(strcmp(word, parola)!=0){ //la parola va bene, scrivo su file:
+								printf("\n da scrivere %s ", word);
 								if(write(temp, word, strlen(word)+1)<0) //strlen ritorna il numero di caratteri escluso il terminatore \0
 									printf("Errore nella scrittura di %s sul file temp", word);
 
-							}else
-								numEliminated++;
-
+							}else	numEliminated++;
+							i=0;
+							strcpy(word, "");
 						}
 					} //fine while lettura dal file
+					printf("RISULTATO: le eliminazioni sono state: %d", numEliminated);
 
 					//mando esito finale:
 					if (sendto(udpSd, &numEliminated, sizeof(numEliminated), 0, (struct sockaddr *)&cliaddr, len)<0){
 						perror("Errore: sendto esito finale");
 						continue;
 					}
-					close(temp);
 					close(fdFile);
-					remove(temp_file);//int remove(const char *filename)
-					rename(temp_file, nomeFile);//int rename(const char *old_filename, const char *new_filename)
+					close(temp);
+					remove(nomeFile);	//int remove(const char *filename)
+					rename(temp_file, nomeFile);	//int rename(const char *old_filename, const char *new_filename)
 				}
 			}
 
 		} /* fine gestione richieste di conteggio */
 	} /* ciclo for della select */
 }
+
