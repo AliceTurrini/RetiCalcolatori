@@ -196,8 +196,8 @@ int main(int argc, char **argv){
 		} /* fine gestione richieste di file */
 
 
-		/* GESTIONE RICHIESTE DI ELIMINAZIONE OCCORRENZE PAROLA */
 		if (FD_ISSET(udpSd, &rset)){
+			numEliminated=0;
 			printf("\n\n---> Server: ricevuta richiesta di eliminazione occorrenza parola\n");
 			len=sizeof(struct sockaddr_in);
 			if (recvfrom(udpSd, &line, sizeof(line), 0, (struct sockaddr *)&cliaddr, &len)<0){
@@ -251,6 +251,8 @@ int main(int argc, char **argv){
 							
 							if(strcmp(word, parola)!=0){ //la parola va bene, scrivo su file:
 								printf("\n da scrivere %s ", word);
+								word[i++]=c;
+								word[i]='\0';
 								if(write(temp, word, strlen(word)+1)<0) //strlen ritorna il numero di caratteri escluso il terminatore \0
 									printf("Errore nella scrittura di %s sul file temp", word);
 
@@ -276,4 +278,3 @@ int main(int argc, char **argv){
 		} /* fine gestione richieste di conteggio */
 	} /* ciclo for della select */
 }
-
